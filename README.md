@@ -1,3 +1,18 @@
+# Custom sparse envs: cheetah_run_sparse and walker_run_sparse
+
+```
+# Create Conda env
+conda create -n dm_control python=3.10
+conda activate dm_control
+
+# Install custom dm_control package
+git clone https://github.com/RLAgent/dm_control.git
+pip install ./dm_control
+
+# Test installation
+python -c "from dm_control import suite; suite.load('cheetah', 'run_sparse'); suite.load('walker', 'run_sparse')"
+```
+
 # `dm_control`: DeepMind Infrastructure for Physics-Based Simulation.
 
 DeepMind's software stack for physics-based simulation and Reinforcement

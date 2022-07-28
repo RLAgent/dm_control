@@ -49,6 +49,17 @@ def run(time_limit=_DEFAULT_TIME_LIMIT, random=None, environment_kwargs=None):
                              **environment_kwargs)
 
 
+@SUITE.add("benchmarking")
+def run_sparse(time_limit=_DEFAULT_TIME_LIMIT, random=None, environment_kwargs=None):
+    """Returns the run task."""
+    physics = Physics.from_xml_string(*get_model_and_assets())
+    task = Cheetah(random=random, sparse=True)
+    environment_kwargs = environment_kwargs or {}
+    return control.Environment(
+        physics, task, time_limit=time_limit, **environment_kwargs
+    )
+
+
 class Physics(mujoco.Physics):
   """Physics simulation with additional features for the Cheetah domain."""
 
@@ -56,9 +67,26 @@ class Physics(mujoco.Physics):
     """Returns the horizontal speed of the Cheetah."""
     return self.named.data.sensordata['torso_subtreelinvel'][0]
 
+  def foot_pos(self):
+    return (
+        self.named.data.xipos["ffoot", "x"],
+        self.named.data.xipos["ffoot", "y"],
+        self.named.data.xipos["ffoot", "z"],
+    )
+
 
 class Cheetah(base.Task):
   """A `Task` to train a running Cheetah."""
+
+  def __init__(self, random=None, sparse=False):
+    """Initializes a new `Cheetah` instance.
+    Args:
+      random: Optional, either a `numpy.random.RandomState` instance, an
+        integer seed for creating a new `RandomState`, or None to select a seed
+        automatically (default).
+    """
+    self._sparse = sparse
+    super().__init__(random=random)
 
   def initialize_episode(self, physics):
     """Sets the state of the environment at the start of each episode."""
@@ -85,8 +113,17 @@ class Cheetah(base.Task):
 
   def get_reward(self, physics):
     """Returns a reward to the agent."""
-    return rewards.tolerance(physics.speed(),
-                             bounds=(_RUN_SPEED, float('inf')),
-                             margin=_RUN_SPEED,
-                             value_at_margin=0,
-                             sigmoid='linear')
+    reward = rewards.tolerance(
+        physics.speed(),
+        bounds=(_RUN_SPEED, float("inf")),
+        margin=_RUN_SPEED,
+        value_at_margin=0,
+        sigmoid="linear",
+    )
+    if self._sparse:
+      if reward < 0.25:
+        reward = 0
+      return reward
+    else:
+      return reward
+

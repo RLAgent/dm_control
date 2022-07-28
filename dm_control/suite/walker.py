@@ -67,6 +67,21 @@ def walk(time_limit=_DEFAULT_TIME_LIMIT, random=None, environment_kwargs=None):
       **environment_kwargs)
 
 
+@SUITE.add("benchmarking")
+def walk_sparse(time_limit=_DEFAULT_TIME_LIMIT, random=None, environment_kwargs=None):
+  """Returns the Walk task."""
+  physics = Physics.from_xml_string(*get_model_and_assets())
+  task = PlanarSparseWalker(move_speed=_WALK_SPEED, move_type="walk", random=random)
+  environment_kwargs = environment_kwargs or {}
+  return control.Environment(
+      physics,
+      task,
+      time_limit=time_limit,
+      control_timestep=_CONTROL_TIMESTEP,
+      **environment_kwargs
+  )
+
+
 @SUITE.add('benchmarking')
 def run(time_limit=_DEFAULT_TIME_LIMIT, random=None, environment_kwargs=None):
   """Returns the Run task."""
@@ -76,6 +91,21 @@ def run(time_limit=_DEFAULT_TIME_LIMIT, random=None, environment_kwargs=None):
   return control.Environment(
       physics, task, time_limit=time_limit, control_timestep=_CONTROL_TIMESTEP,
       **environment_kwargs)
+
+
+@SUITE.add("benchmarking")
+def run_sparse(time_limit=_DEFAULT_TIME_LIMIT, random=None, environment_kwargs=None):
+    """Returns the Run task."""
+    physics = Physics.from_xml_string(*get_model_and_assets())
+    task = PlanarSparseWalker(move_speed=_RUN_SPEED, move_type="run", random=random)
+    environment_kwargs = environment_kwargs or {}
+    return control.Environment(
+        physics,
+        task,
+        time_limit=time_limit,
+        control_timestep=_CONTROL_TIMESTEP,
+        **environment_kwargs
+    )
 
 
 class Physics(mujoco.Physics):
@@ -96,6 +126,24 @@ class Physics(mujoco.Physics):
   def orientations(self):
     """Returns planar orientations of all bodies."""
     return self.named.data.xmat[1:, ['xx', 'xz']].ravel()
+
+  def foot_height(self):
+    return self.named.data.xipos["right_foot", "z"]
+
+  def torso_pos(self):
+    return (
+        self.named.data.xipos["torso", "x"],
+        self.named.data.xipos["torso", "y"],
+        self.named.data.xipos["torso", "z"],
+    )
+
+  def foot_pos(self):
+    return (
+        self.named.data.xipos["right_foot", "x"],
+        self.named.data.xipos["right_foot", "y"],
+        self.named.data.xipos["right_foot", "z"],
+    )
+
 
 
 class PlanarWalker(base.Task):
@@ -152,3 +200,70 @@ class PlanarWalker(base.Task):
                                       value_at_margin=0.5,
                                       sigmoid='linear')
       return stand_reward * (5*move_reward + 1) / 6
+
+
+class PlanarSparseWalker(base.Task):
+  """A planar walker sparse task."""
+
+  def __init__(self, move_speed, move_type="walk", random=None):
+    """Initializes an instance of `PlanarSparseWalker`.
+    Args:
+      move_speed: A float. If this value is zero, reward is given simply for
+            standing up. Otherwise this specifies a target horizontal velocity for
+            the walking task.
+      random: Optional, either a `numpy.random.RandomState` instance, an
+            integer seed for creating a new `RandomState`, or None to select a seed
+            automatically (default).
+    """
+    self._move_speed = move_speed
+    self._move_type = move_type
+    super().__init__(random=random)
+
+  def initialize_episode(self, physics):
+    """Sets the state of the environment at the start of each episode.
+    In 'standing' mode, use initial orientation and small velocities.
+    In 'random' mode, randomize joint angles and let fall to the floor.
+    Args:
+      physics: An instance of `Physics`.
+    """
+    randomizers.randomize_limited_and_rotational_joints(physics, self.random)
+    super().initialize_episode(physics)
+
+  def get_observation(self, physics):
+    """Returns an observation of body orientations, height and velocites."""
+    obs = collections.OrderedDict()
+    obs["orientations"] = physics.orientations()
+    obs["height"] = physics.torso_height()
+    obs["velocity"] = physics.velocity()
+    return obs
+
+  def get_reward(self, physics):
+    """Returns a reward to the agent."""
+    standing = rewards.tolerance(
+        physics.torso_height(),
+        bounds=(_STAND_HEIGHT, float("inf")),
+        margin=_STAND_HEIGHT / 2,
+    )
+    upright = (1 + physics.torso_upright()) / 2
+    stand_reward = (3 * standing + upright) / 4
+    if self._move_speed == 0:
+      return stand_reward
+    else:
+      move_reward = rewards.tolerance(
+          physics.horizontal_velocity(),
+          bounds=(self._move_speed, float("inf")),
+          margin=self._move_speed / 2,
+          value_at_margin=0.5,
+          sigmoid="linear",
+      )
+      reward = stand_reward * (5 * move_reward + 1) / 6
+      if self._move_type == "walk":
+        if reward < 0.7:
+          reward = 0
+      elif self._move_type == "run":
+        if reward < 0.25:
+          reward = 0
+      else:
+        raise ValueError(self._move_type)
+      return reward
+
