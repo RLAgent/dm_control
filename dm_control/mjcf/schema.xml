@@ -5,6 +5,7 @@
   <children>
     <element name="compiler">
       <attributes>
+        <attribute name="autolimits" type="keyword" valid_values="false true"/>
         <attribute name="boundmass" type="float"/>
         <attribute name="boundinertia" type="float"/>
         <attribute name="settotalmass" type="float"/>
@@ -16,12 +17,14 @@
         <attribute name="eulerseq" type="string"/>
         <attribute name="meshdir" type="basepath" path_namespace="mesh" conflict_allowed="true"/>
         <attribute name="texturedir" type="basepath" path_namespace="texture" conflict_allowed="true"/>
+        <attribute name="assetdir" type="basepath" path_namespace="asset" conflict_allowed="true"/>
         <attribute name="discardvisual" type="keyword" valid_values="false true"/>
         <attribute name="convexhull" type="keyword" valid_values="false true"/>
         <attribute name="userthread" type="keyword" valid_values="false true"/>
         <attribute name="fusestatic" type="keyword" valid_values="false true"/>
         <attribute name="inertiafromgeom" type="keyword" valid_values="false true auto"/>
         <attribute name="inertiagrouprange" type="array" array_type="int" array_size="2"/>
+        <attribute name="exactmeshinertia" type="keyword" valid_values="false true"/>
       </attributes>
       <children>
         <element name="lengthrange">
@@ -34,7 +37,7 @@
             <attribute name="timeconst" type="float"/>
             <attribute name="timestep" type="float"/>
             <attribute name="inttotal" type="float"/>
-            <attribute name="inteval" type="float"/>
+            <attribute name="interval" type="float"/>
             <attribute name="tolrange" type="float"/>
           </attributes>
         </element>
@@ -53,7 +56,7 @@
         <attribute name="o_margin" type="float"/>
         <attribute name="o_solref" type="array" array_type="float" array_size="2"/>
         <attribute name="o_solimp" type="array" array_type="float" array_size="5"/>
-        <attribute name="integrator" type="keyword" valid_values="Euler RK4 implicit"/>
+        <attribute name="integrator" type="keyword" valid_values="Euler RK4 implicit implicitfast"/>
         <attribute name="collision" type="keyword" valid_values="all predefined dynamic"/>
         <attribute name="cone" type="keyword" valid_values="pyramidal elliptic"/>
         <attribute name="jacobian" type="keyword" valid_values="dense sparse auto"/>
@@ -80,6 +83,7 @@
             <attribute name="filterparent" type="keyword" valid_values="disable enable"/>
             <attribute name="actuation" type="keyword" valid_values="disable enable"/>
             <attribute name="refsafe" type="keyword" valid_values="disable enable"/>
+            <attribute name="sensor" type="keyword" valid_values="disable enable"/>
             <attribute name="override" type="keyword" valid_values="disable enable"/>
             <attribute name="energy" type="keyword" valid_values="disable enable"/>
             <attribute name="fwdinv" type="keyword" valid_values="disable enable"/>
@@ -91,6 +95,7 @@
     </element>
     <element name="size">
       <attributes>
+        <attribute name="memory" type="string" conflict_allowed="true" conflict_behavior="max_bytes"/>
         <attribute name="njmax" type="int" conflict_allowed="true" conflict_behavior="max"/>
         <attribute name="nconmax" type="int" conflict_allowed="true" conflict_behavior="max"/>
         <attribute name="nstack" type="int"/>
@@ -112,10 +117,13 @@
           <attributes>
             <attribute name="fovy" type="float"/>
             <attribute name="ipd" type="float"/>
+            <attribute name="azimuth" type="float"/>
+            <attribute name="elevation" type="float"/>
             <attribute name="linewidth" type="float"/>
             <attribute name="glow" type="float"/>
             <attribute name="offwidth" type="int"/>
             <attribute name="offheight" type="int"/>
+            <attribute name="ellipsoidinertia" type="keyword" valid_values="false true"/>
           </attributes>
         </element>
         <element name="quality">
@@ -238,7 +246,7 @@
             <attribute name="pos" type="array" array_type="float" array_size="3"/>
             <attribute name="axis" type="array" array_type="float" array_size="3"/>
             <attribute name="springdamper" type="array" array_type="float" array_size="2"/>
-            <attribute name="limited" type="keyword" valid_values="false true"/>
+            <attribute name="limited" type="keyword" valid_values="false true auto"/>
             <attribute name="solreflimit" type="array" array_type="float" array_size="2"/>
             <attribute name="solimplimit" type="array" array_type="float" array_size="5"/>
             <attribute name="solreffriction" type="array" array_type="float" array_size="2"/>
@@ -268,6 +276,7 @@
             <attribute name="friction" type="array" array_type="float" array_size="3"/>
             <attribute name="mass" type="float"/>
             <attribute name="density" type="float"/>
+            <attribute name="shellinertia" type="keyword" valid_values="false true"/>
             <attribute name="solmix" type="float"/>
             <attribute name="solref" type="array" array_type="float" array_size="2"/>
             <attribute name="solimp" type="array" array_type="float" array_size="5"/>
@@ -357,7 +366,7 @@
         <element name="tendon">
           <attributes>
             <attribute name="group" type="int"/>
-            <attribute name="limited" type="keyword" valid_values="false true"/>
+            <attribute name="limited" type="keyword" valid_values="false true auto"/>
             <attribute name="range" type="array" array_type="float" array_size="2"/>
             <attribute name="solreflimit" type="array" array_type="float" array_size="2"/>
             <attribute name="solimplimit" type="array" array_type="float" array_size="5"/>
@@ -376,16 +385,17 @@
         <element name="general">
           <attributes>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="actdim" type="int"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="gear" type="array" array_type="float" array_size="6"/>
             <attribute name="cranklength" type="float"/>
             <attribute name="user" type="array" array_type="float"/>
-            <attribute name="dyntype" type="keyword" valid_values="none integrator filter user"/>
-            <attribute name="gaintype" type="keyword" valid_values="fixed user"/>
-            <attribute name="biastype" type="keyword" valid_values="none affine user"/>
+            <attribute name="dyntype" type="keyword" valid_values="none integrator filter muscle user"/>
+            <attribute name="gaintype" type="keyword" valid_values="fixed affine muscle user"/>
+            <attribute name="biastype" type="keyword" valid_values="none affine muscle user"/>
             <attribute name="dynprm" type="array" array_type="float" array_size="10"/>
             <attribute name="gainprm" type="array" array_type="float" array_size="10"/>
             <attribute name="biasprm" type="array" array_type="float" array_size="10"/>
@@ -394,8 +404,8 @@
         <element name="motor">
           <attributes>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="gear" type="array" array_type="float" array_size="6"/>
@@ -409,8 +419,8 @@
         <element name="position">
           <attributes>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="gear" type="array" array_type="float" array_size="6"/>
@@ -422,8 +432,8 @@
         <element name="velocity">
           <attributes>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="gear" type="array" array_type="float" array_size="6"/>
@@ -435,8 +445,8 @@
         <element name="intvelocity">
           <attributes>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="actrange" type="array" array_type="float" array_size="2"/>
@@ -449,7 +459,7 @@
         <element name="damper">
           <attributes>
             <attribute name="group" type="int"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="gear" type="array" array_type="float" array_size="6"/>
@@ -461,8 +471,8 @@
         <element name="cylinder">
           <attributes>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="gear" type="array" array_type="float" array_size="6"/>
@@ -477,8 +487,8 @@
         <element name="muscle">
           <attributes>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="lengthrange" type="array" array_type="float" array_size="2"/>
@@ -494,6 +504,16 @@
             <attribute name="vmax" type="float"/>
             <attribute name="fpmax" type="float"/>
             <attribute name="fvmax" type="float"/>
+          </attributes>
+        </element>
+        <element name="adhesion">
+          <attributes>
+            <attribute name="group" type="int"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
+            <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
+            <attribute name="user" type="array" array_type="float"/>
+            <attribute name="gain" type="float"/>
           </attributes>
         </element>
         <element name="default" recursive="true" repeated="true">
@@ -555,6 +575,7 @@
                 <attribute name="friction" type="array" array_type="float" array_size="3"/>
                 <attribute name="mass" type="float"/>
                 <attribute name="density" type="float"/>
+                <attribute name="shellinertia" type="keyword" valid_values="false true"/>
                 <attribute name="solmix" type="float"/>
                 <attribute name="solref" type="array" array_type="float" array_size="2"/>
                 <attribute name="solimp" type="array" array_type="float" array_size="5"/>
@@ -660,16 +681,17 @@
             </element>
             <element name="general">
               <attributes>
-                <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-                <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+                <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+                <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
                 <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
                 <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
                 <attribute name="gear" type="array" array_type="float" array_size="6"/>
                 <attribute name="cranklength" type="float"/>
                 <attribute name="user" type="array" array_type="float"/>
-                <attribute name="dyntype" type="keyword" valid_values="none integrator filter user"/>
-                <attribute name="gaintype" type="keyword" valid_values="fixed user"/>
-                <attribute name="biastype" type="keyword" valid_values="none affine user"/>
+                <attribute name="actdim" type="int"/>
+                <attribute name="dyntype" type="keyword" valid_values="none integrator filter muscle user"/>
+                <attribute name="gaintype" type="keyword" valid_values="fixed affine muscle user"/>
+                <attribute name="biastype" type="keyword" valid_values="none affine muscle user"/>
                 <attribute name="dynprm" type="array" array_type="float" array_size="10"/>
                 <attribute name="gainprm" type="array" array_type="float" array_size="10"/>
                 <attribute name="biasprm" type="array" array_type="float" array_size="10"/>
@@ -677,8 +699,8 @@
             </element>
             <element name="motor">
               <attributes>
-                <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-                <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+                <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+                <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
                 <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
                 <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
                 <attribute name="gear" type="array" array_type="float" array_size="6"/>
@@ -691,8 +713,8 @@
             </element>
             <element name="position">
               <attributes>
-                <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-                <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+                <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+                <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
                 <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
                 <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
                 <attribute name="gear" type="array" array_type="float" array_size="6"/>
@@ -703,8 +725,8 @@
             </element>
             <element name="velocity">
               <attributes>
-                <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-                <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+                <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+                <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
                 <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
                 <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
                 <attribute name="gear" type="array" array_type="float" array_size="6"/>
@@ -715,8 +737,8 @@
             </element>
             <element name="intvelocity">
               <attributes>
-                <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-                <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+                <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+                <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
                 <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
                 <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
                 <attribute name="actrange" type="array" array_type="float" array_size="2"/>
@@ -728,7 +750,7 @@
             </element>
             <element name="damper">
               <attributes>
-                <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+                <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
                 <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
                 <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
                 <attribute name="gear" type="array" array_type="float" array_size="6"/>
@@ -739,8 +761,8 @@
             </element>
             <element name="cylinder">
               <attributes>
-                <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-                <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+                <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+                <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
                 <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
                 <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
                 <attribute name="gear" type="array" array_type="float" array_size="6"/>
@@ -751,6 +773,40 @@
                 <attribute name="diameter" type="float"/>
                 <attribute name="bias" type="array" array_type="float" array_size="3"/>
               </attributes>
+            </element>
+            <element name="adhesion">
+              <attributes>
+                <attribute name="group" type="int"/>
+                <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
+                <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
+                <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
+                <attribute name="user" type="array" array_type="float"/>
+                <attribute name="gain" type="float"/>
+              </attributes>
+            </element>
+          </children>
+        </element>
+      </children>
+    </element>
+    <element name="extension">
+      <children>
+        <element name="plugin" repeated="true" namespace="plugin">
+          <attributes>
+            <attribute name="plugin" type="string" required="true"/>
+          </attributes>
+          <children>
+            <element name="instance" repeated="true" namespace="plugin">
+              <attributes>
+                <attribute name="name" type="identifier" required="true"/>
+              </attributes>
+              <children>
+                <element name="config" repeated="true">
+                  <attributes>
+                    <attribute name="key" type="string"/>
+                    <attribute name="value" type="string"/>
+                  </attributes>
+                </element>
+              </children>
             </element>
           </children>
         </element>
@@ -895,6 +951,7 @@
             <attribute name="friction" type="array" array_type="float" array_size="3"/>
             <attribute name="mass" type="float"/>
             <attribute name="density" type="float"/>
+            <attribute name="shellinertia" type="keyword" valid_values="false true"/>
             <attribute name="solmix" type="float"/>
             <attribute name="solref" type="array" array_type="float" array_size="2"/>
             <attribute name="solimp" type="array" array_type="float" array_size="5"/>
@@ -982,6 +1039,21 @@
             <attribute name="solimpsmooth" type="array" array_type="float" array_size="5"/>
           </attributes>
           <children>
+            <element name="plugin" repeated="true" namespace="composite">
+              <attributes>
+                <attribute name="name" type="identifier"/>
+                <attribute name="plugin" type="string" reference_namespace="plugin"/>
+                <attribute name="instance" type="reference" reference_namespace="plugin"/>
+              </attributes>
+              <children>
+                <element name="config" repeated="true">
+                  <attributes>
+                    <attribute name="key" type="string"/>
+                    <attribute name="value" type="string"/>
+                  </attributes>
+                </element>
+              </children>
+            </element>
             <element name="joint" repeated="true">
               <attributes>
                 <attribute name="kind" type="keyword" valid_values="main twist stretch" required="true"/>
@@ -1036,6 +1108,7 @@
                 <attribute name="friction" type="array" array_type="float" array_size="3"/>
                 <attribute name="mass" type="float"/>
                 <attribute name="density" type="float"/>
+                <attribute name="shellinertia" type="keyword" valid_values="false true"/>
                 <attribute name="solmix" type="float"/>
                 <attribute name="solref" type="array" array_type="float" array_size="2"/>
                 <attribute name="solimp" type="array" array_type="float" array_size="5"/>
@@ -1080,8 +1153,24 @@
             <attribute name="xyaxes" type="array" array_type="float" array_size="6"/>
             <attribute name="zaxis" type="array" array_type="float" array_size="3"/>
             <attribute name="euler" type="array" array_type="float" array_size="3"/>
+            <attribute name="gravcomp" type="float"/>
           </attributes>
           <children>
+            <element name="plugin" repeated="true" namespace="body">
+              <attributes>
+                <attribute name="name" type="identifier"/>
+                <attribute name="plugin" type="string" reference_namespace="plugin"/>
+                <attribute name="instance" type="reference" reference_namespace="plugin"/>
+              </attributes>
+              <children>
+                <element name="config" repeated="true">
+                  <attributes>
+                    <attribute name="key" type="string"/>
+                    <attribute name="value" type="string"/>
+                  </attributes>
+                </element>
+              </children>
+            </element>
             <element name="inertial" on_demand="true">
               <attributes>
                 <attribute name="pos" type="array" required="true" array_type="float" array_size="3"/>
@@ -1142,6 +1231,7 @@
                 <attribute name="friction" type="array" array_type="float" array_size="3"/>
                 <attribute name="mass" type="float"/>
                 <attribute name="density" type="float"/>
+                <attribute name="shellinertia" type="keyword" valid_values="false true"/>
                 <attribute name="solmix" type="float"/>
                 <attribute name="solref" type="array" array_type="float" array_size="2"/>
                 <attribute name="solimp" type="array" array_type="float" array_size="5"/>
@@ -1283,6 +1373,7 @@
                     <attribute name="friction" type="array" array_type="float" array_size="3"/>
                     <attribute name="mass" type="float"/>
                     <attribute name="density" type="float"/>
+                    <attribute name="shellinertia" type="keyword" valid_values="false true"/>
                     <attribute name="solmix" type="float"/>
                     <attribute name="solref" type="array" array_type="float" array_size="2"/>
                     <attribute name="solimp" type="array" array_type="float" array_size="5"/>
@@ -1369,6 +1460,8 @@
             <attribute name="body1" type="reference" required="true" reference_namespace="body"/>
             <attribute name="body2" type="reference" reference_namespace="body"/>
             <attribute name="relpose" type="array" array_type="float" array_size="7"/>
+            <attribute name="anchor" type="array" array_type="float" array_size="3"/>
+            <attribute name="torquescale" type="float"/>
           </attributes>
         </element>
         <element name="joint" repeated="true" namespace="equality">
@@ -1427,7 +1520,7 @@
             <attribute name="width" type="float"/>
             <attribute name="material" type="reference"/>
             <attribute name="rgba" type="array" array_type="float" array_size="4"/>
-            <attribute name="springlength" type="float"/>
+            <attribute name="springlength" type="float" array_size="2"/>
             <attribute name="stiffness" type="float"/>
             <attribute name="damping" type="float"/>
             <attribute name="user" type="array" array_type="float"/>
@@ -1467,7 +1560,7 @@
             <attribute name="solimplimit" type="array" array_type="float" array_size="5"/>
             <attribute name="solreffriction" type="array" array_type="float" array_size="2"/>
             <attribute name="solimpfriction" type="array" array_type="float" array_size="5"/>
-            <attribute name="springlength" type="float"/>
+            <attribute name="springlength" type="float" array_size="2"/>
           </attributes>
           <children>
             <element name="joint" repeated="true">
@@ -1487,9 +1580,10 @@
             <attribute name="name" type="identifier"/>
             <attribute name="class" type="reference" reference_namespace="default"/>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
-            <attribute name="actlimited" type="keyword" valid_values="false true"/>
+            <attribute name="actdim" type="int"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="actlimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="actrange" type="array" array_type="float" array_size="2"/>
@@ -1499,12 +1593,14 @@
             <attribute name="joint" type="reference"/>
             <attribute name="jointinparent" type="reference" reference_namespace="joint"/>
             <attribute name="site" type="reference"/>
+            <attribute name="refsite" type="reference" reference_namespace="site"/>
             <attribute name="tendon" type="reference"/>
+            <attribute name="body" type="reference"/>
             <attribute name="cranksite" type="reference" reference_namespace="site"/>
             <attribute name="slidersite" type="reference" reference_namespace="site"/>
             <attribute name="user" type="array" array_type="float"/>
             <attribute name="dyntype" type="keyword" valid_values="none integrator filter muscle user"/>
-            <attribute name="gaintype" type="keyword" valid_values="fixed muscle user"/>
+            <attribute name="gaintype" type="keyword" valid_values="fixed affine muscle user"/>
             <attribute name="biastype" type="keyword" valid_values="none affine muscle user"/>
             <attribute name="dynprm" type="array" array_type="float" array_size="10"/>
             <attribute name="gainprm" type="array" array_type="float" array_size="10"/>
@@ -1516,8 +1612,8 @@
             <attribute name="name" type="identifier"/>
             <attribute name="class" type="reference" reference_namespace="default"/>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="lengthrange" type="array" array_type="float" array_size="2"/>
@@ -1529,6 +1625,7 @@
             <attribute name="cranksite" type="reference" reference_namespace="site"/>
             <attribute name="slidersite" type="reference" reference_namespace="site"/>
             <attribute name="site" type="reference"/>
+            <attribute name="refsite" type="reference" reference_namespace="site"/>
             <attribute name="user" type="array" array_type="float"/>
           </attributes>
         </element>
@@ -1537,8 +1634,8 @@
             <attribute name="name" type="identifier"/>
             <attribute name="class" type="reference" reference_namespace="default"/>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="lengthrange" type="array" array_type="float" array_size="2"/>
@@ -1550,6 +1647,7 @@
             <attribute name="cranksite" type="reference" reference_namespace="site"/>
             <attribute name="slidersite" type="reference" reference_namespace="site"/>
             <attribute name="site" type="reference"/>
+            <attribute name="refsite" type="reference" reference_namespace="site"/>
             <attribute name="user" type="array" array_type="float"/>
             <attribute name="kp" type="float"/>
           </attributes>
@@ -1559,8 +1657,8 @@
             <attribute name="name" type="identifier"/>
             <attribute name="class" type="reference" reference_namespace="default"/>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="lengthrange" type="array" array_type="float" array_size="2"/>
@@ -1572,6 +1670,7 @@
             <attribute name="cranksite" type="reference" reference_namespace="site"/>
             <attribute name="slidersite" type="reference" reference_namespace="site"/>
             <attribute name="site" type="reference"/>
+            <attribute name="refsite" type="reference" reference_namespace="site"/>
             <attribute name="user" type="array" array_type="float"/>
             <attribute name="kv" type="float"/>
           </attributes>
@@ -1581,8 +1680,8 @@
             <attribute name="name" type="identifier"/>
             <attribute name="class" type="reference" reference_namespace="default"/>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="actrange" type="array" array_type="float" array_size="2"/>
@@ -1595,6 +1694,7 @@
             <attribute name="cranksite" type="reference" reference_namespace="site"/>
             <attribute name="slidersite" type="reference" reference_namespace="site"/>
             <attribute name="site" type="reference"/>
+            <attribute name="refsite" type="reference" reference_namespace="site"/>
             <attribute name="user" type="array" array_type="float"/>
             <attribute name="kp" type="float"/>
           </attributes>
@@ -1604,7 +1704,7 @@
             <attribute name="name" type="identifier"/>
             <attribute name="class" type="reference" reference_namespace="default"/>
             <attribute name="group" type="int"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="lengthrange" type="array" array_type="float" array_size="2"/>
@@ -1616,6 +1716,7 @@
             <attribute name="cranksite" type="reference" reference_namespace="site"/>
             <attribute name="slidersite" type="reference" reference_namespace="site"/>
             <attribute name="site" type="reference"/>
+            <attribute name="refsite" type="reference" reference_namespace="site"/>
             <attribute name="user" type="array" array_type="float"/>
             <attribute name="kv" type="float"/>
           </attributes>
@@ -1625,8 +1726,8 @@
             <attribute name="name" type="identifier"/>
             <attribute name="class" type="reference" reference_namespace="default"/>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="lengthrange" type="array" array_type="float" array_size="2"/>
@@ -1638,6 +1739,7 @@
             <attribute name="cranksite" type="reference" reference_namespace="site"/>
             <attribute name="slidersite" type="reference" reference_namespace="site"/>
             <attribute name="site" type="reference"/>
+            <attribute name="refsite" type="reference" reference_namespace="site"/>
             <attribute name="user" type="array" array_type="float"/>
             <attribute name="timeconst" type="float"/>
             <attribute name="area" type="float"/>
@@ -1650,8 +1752,8 @@
             <attribute name="name" type="identifier"/>
             <attribute name="class" type="reference" reference_namespace="default"/>
             <attribute name="group" type="int"/>
-            <attribute name="ctrllimited" type="keyword" valid_values="false true"/>
-            <attribute name="forcelimited" type="keyword" valid_values="false true"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
             <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
             <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
             <attribute name="lengthrange" type="array" array_type="float" array_size="2"/>
@@ -1674,6 +1776,50 @@
             <attribute name="fpmax" type="float"/>
             <attribute name="fvmax" type="float"/>
           </attributes>
+        </element>
+        <element name="adhesion" repeated="true" namespace="actuator">
+          <attributes>
+            <attribute name="name" type="identifier"/>
+            <attribute name="class" type="reference" reference_namespace="default"/>
+            <attribute name="group" type="int"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
+            <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
+            <attribute name="body" type="reference"/>
+            <attribute name="user" type="array" array_type="float"/>
+            <attribute name="gain" type="float"/>
+          </attributes>
+        </element>
+        <element name="plugin" repeated="true" namespace="actuator">
+          <attributes>
+            <attribute name="name" type="identifier"/>
+            <attribute name="class" type="reference" reference_namespace="default"/>
+            <attribute name="plugin" type="string" reference_namespace="plugin"/>
+            <attribute name="instance" type="reference" reference_namespace="plugin"/>
+            <attribute name="group" type="int"/>
+            <attribute name="ctrllimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="forcelimited" type="keyword" valid_values="false true auto"/>
+            <attribute name="ctrlrange" type="array" array_type="float" array_size="2"/>
+            <attribute name="forcerange" type="array" array_type="float" array_size="2"/>
+            <attribute name="lengthrange" type="array" array_type="float" array_size="2"/>
+            <attribute name="gear" type="array" array_type="float" array_size="6"/>
+            <attribute name="cranklength" type="float"/>
+            <attribute name="joint" type="reference"/>
+            <attribute name="jointinparent" type="reference" reference_namespace="joint"/>
+            <attribute name="site" type="reference"/>
+            <attribute name="tendon" type="reference"/>
+            <attribute name="cranksite" type="reference" reference_namespace="site"/>
+            <attribute name="slidersite" type="reference" reference_namespace="site"/>
+            <attribute name="user" type="array" array_type="float"/>
+          </attributes>
+          <children>
+            <element name="config" repeated="true">
+              <attributes>
+                <attribute name="key" type="string"/>
+                <attribute name="value" type="string"/>
+              </attributes>
+            </element>
+          </children>
         </element>
       </children>
     </element>
@@ -2023,12 +2169,31 @@
             <attribute name="noise" type="float"/>
             <attribute name="cutoff" type="float"/>
             <attribute name="user" type="array" array_type="float"/>
-            <attribute name="objtype" type="keyword" required="true" valid_values="body joint geom site camera light mesh skin hfield texture material equality tendon actuator sensor numeric text tuple contact keyframe"/>
-            <attribute name="objname" type="reference" required="true" reference_namespace="attrib:objtype"/>
-            <attribute name="datatype" type="keyword" required="true" valid_values="real positive axis quaternion"/>
-            <attribute name="needstage" type="keyword" required="true" valid_values="pos vel acc"/>
+            <attribute name="objtype" type="keyword" valid_values="body joint geom site camera light mesh skin hfield texture material equality tendon actuator sensor numeric text tuple contact keyframe"/>
+            <attribute name="objname" type="reference" reference_namespace="attrib:objtype"/>
+            <attribute name="datatype" type="keyword" valid_values="real positive axis quaternion"/>
+            <attribute name="needstage" type="keyword" valid_values="pos vel acc"/>
             <attribute name="dim" type="int" required="true"/>
           </attributes>
+        </element>
+        <element name="plugin" repeated="true" namespace="sensor">
+          <attributes>
+            <attribute name="name" type="identifier"/>
+            <attribute name="plugin" type="string" reference_namespace="plugin"/>
+            <attribute name="instance" type="reference" reference_namespace="plugin"/>
+            <attribute name="cutoff" type="float"/>
+            <attribute name="objtype" type="keyword" valid_values="body joint geom site camera light mesh skin hfield texture material equality tendon actuator sensor numeric text tuple contact keyframe"/>
+            <attribute name="objname" type="reference" reference_namespace="attrib:objtype"/>
+            <attribute name="user" type="array" array_type="float"/>
+          </attributes>
+          <children>
+            <element name="config" repeated="true">
+              <attributes>
+                <attribute name="key" type="string"/>
+                <attribute name="value" type="string"/>
+              </attributes>
+            </element>
+          </children>
         </element>
       </children>
     </element>

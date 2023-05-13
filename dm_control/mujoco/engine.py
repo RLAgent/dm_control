@@ -105,7 +105,8 @@ class Physics(_control.Physics):
   _contexts = None
 
   def __new__(cls, *args, **kwargs):
-    obj = super(Physics, cls).__new__(cls)
+    # TODO(b/174603485): Re-enable once lint stops spuriously firing here.
+    obj = super(Physics, cls).__new__(cls)  # pylint: disable=no-value-for-parameter
     # The lock is created in `__new__` rather than `__init__` because there are
     # a number of existing subclasses that override `__init__` without calling
     # the `__init__` method of the  superclass.
@@ -143,29 +144,36 @@ class Physics(_control.Physics):
     """
     np.copyto(self.data.ctrl, control)
 
-  def step(self, nstep=1):
-    """Advances physics with up-to-date position and velocity dependent fields.
-
-    Args:
-      nstep: Optional integer, number of steps to take.
-
-    The actuation can be updated by calling the `set_control` function first.
-    """
+  def _step_with_up_to_date_position_velocity(self, nstep: int = 1) -> None:
+    """Physics step with up-to-date position and velocity dependent fields."""
     # In the case of Euler integration we assume mj_step1 has already been
     # called for this state, finish the step with mj_step2 and then update all
     # position and velocity related fields with mj_step1. This ensures that
     # (most of) mjData is in sync with qpos and qvel. In the case of non-Euler
     # integrators (e.g. RK4) an additional mj_step1 must be called after the
     # last mj_step to ensure mjData syncing.
+    if self.model.opt.integrator != mujoco.mjtIntegrator.mjINT_RK4.value:
+      mujoco.mj_step2(self.model.ptr, self.data.ptr)
+      if nstep > 1:
+        mujoco.mj_step(self.model.ptr, self.data.ptr, nstep-1)
+    else:
+      mujoco.mj_step(self.model.ptr, self.data.ptr, nstep)
+
+    mujoco.mj_step1(self.model.ptr, self.data.ptr)
+
+  def step(self, nstep: int = 1) -> None:
+    """Advances the physics state by `nstep`s.
+
+    Args:
+      nstep: Optional integer, number of steps to take.
+
+    The actuation can be updated by calling the `set_control` function first.
+    """
     with self.check_invalid_state():
-      if self.model.opt.integrator != mujoco.mjtIntegrator.mjINT_RK4.value:
-        mujoco.mj_step2(self.model.ptr, self.data.ptr)
-        if nstep > 1:
-          mujoco.mj_step(self.model.ptr, self.data.ptr, nstep-1)
+      if self.legacy_step:
+        self._step_with_up_to_date_position_velocity(nstep)
       else:
         mujoco.mj_step(self.model.ptr, self.data.ptr, nstep)
-
-      mujoco.mj_step1(self.model.ptr, self.data.ptr)
 
   def render(
       self,
@@ -324,11 +332,9 @@ class Physics(_control.Physics):
         context is nested inside a `suppress_physics_errors` context, in which
         case a warning will be logged instead.
     """
-    self._warnings_before[:] = [w.number for w in self._warnings]
+    np.copyto(self._warnings_before, self._warnings)
     yield
-    np.greater([w.number for w in self._warnings],
-               self._warnings_before,
-               out=self._new_warnings)
+    np.greater(self._warnings, self._warnings_before, out=self._new_warnings)
     if any(self._new_warnings):
       warning_names = np.compress(self._new_warnings,
                                   list(mujoco.mjtWarning.__members__))
@@ -379,7 +385,7 @@ class Physics(_control.Physics):
 
     # Performance optimization: pre-allocate numpy arrays used when checking for
     # MuJoCo warnings on each step.
-    self._warnings = self.data.warning
+    self._warnings = self.data.warning.number
     self._warnings_before = np.empty_like(self._warnings)
     self._new_warnings = np.empty(dtype=bool, shape=(len(self._warnings),))
 
@@ -539,12 +545,21 @@ class Physics(_control.Physics):
     """Returns list of arrays making up internal physics simulation state.
 
     The physics state consists of the state variables, their derivatives and
-    actuation activations.
+    actuation activations. If the model contains plugins, then the state will
+    also contain any plugin state.
 
     Returns:
       List of NumPy arrays containing full physics simulation state.
     """
-    return [self.data.qpos, self.data.qvel, self.data.act]
+    if self.model.nplugin > 0:
+      return [
+          self.data.qpos,
+          self.data.qvel,
+          self.data.act,
+          self.data.plugin_state,
+      ]
+    else:
+      return [self.data.qpos, self.data.qvel, self.data.act]
 
   # Named views of simulation data.
 
@@ -612,7 +627,7 @@ class Camera:
 
   def __init__(
       self,
-      physics,
+      physics: Physics,
       height: int = 240,
       width: int = 320,
       camera_id: Union[int, str] = -1,
@@ -683,6 +698,7 @@ class Camera:
 
     if camera_id == -1:
       self._render_camera.type = mujoco.mjtCamera.mjCAMERA_FREE
+      mujoco.mjv_defaultFreeCamera(physics.model._model, self._render_camera)
     else:
       # As defined in the Mujoco documentation, mjCAMERA_FIXED refers to a
       # camera explicitly defined in the model.
@@ -956,15 +972,29 @@ class MovableCamera(Camera):
   A `MovableCamera` always corresponds to a MuJoCo free camera with id -1.
   """
 
-  def __init__(self, physics, height=240, width=320):
+  def __init__(
+      self,
+      physics: Physics,
+      height: int = 240,
+      width: int = 320,
+      max_geom: Optional[int] = None,
+      scene_callback: Optional[Callable[[Physics, mujoco.MjvScene],
+                                        None]] = None,
+  ):
     """Initializes a new `MovableCamera`.
 
     Args:
       physics: Instance of `Physics`.
       height: Optional image height. Defaults to 240.
       width: Optional image width. Defaults to 320.
+      max_geom: Optional integer specifying the maximum number of geoms that can
+        be rendered in the same scene. If None this will be chosen automatically
+        based on the estimated maximum number of renderable geoms in the model.
+      scene_callback: Called after the scene has been created and before
+        it is rendered. Can be used to add more geoms to the scene.
     """
-    super().__init__(physics=physics, height=height, width=width, camera_id=-1)
+    super().__init__(physics=physics, height=height, width=width, camera_id=-1,
+                     max_geom=max_geom, scene_callback=scene_callback)
 
   def get_pose(self):
     """Returns the pose of the camera.

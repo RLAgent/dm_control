@@ -20,7 +20,7 @@ Learning environments, using MuJoCo physics.
 
 An **introductory tutorial** for this package is available as a Colaboratory
 notebook:
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/deepmind/dm_control/blob/master/tutorial.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/deepmind/dm_control/blob/main/tutorial.ipynb)
 
 ## Overview
 
@@ -99,7 +99,7 @@ at every single Git commit.
 
 If you want to install an unreleased version of `dm_control` directly from our
 repository, you can do so by running `pip install
-git+git://github.com/deepmind/dm_control.git`.
+git+https://github.com/deepmind/dm_control.git`.
 
 ## Rendering
 
@@ -128,7 +128,7 @@ By default, `dm_control` will attempt to use GLFW first, then EGL, then OSMesa.
 You can also specify a particular backend to use by setting the `MUJOCO_GL=`
 environment variable to `"glfw"`, `"egl"`, or `"osmesa"`, respectively. When
 rendering with EGL, you can also specify which GPU to use for rendering by
-setting the environment variable `EGL_DEVICE_ID=` to the target GPU ID.
+setting the environment variable `MUJOCO_EGL_DEVICE_ID=` to the target GPU ID.
 
 ## Additional instructions for Homebrew users on macOS
 

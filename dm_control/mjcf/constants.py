@@ -42,7 +42,9 @@ WORLDBODY = 'worldbody'
 MJDATA_TRIGGERS_DIRTY = [
     'qpos', 'qvel', 'act', 'ctrl', 'qfrc_applied', 'xfrc_applied']
 MJMODEL_DOESNT_TRIGGER_DIRTY = [
-    'rgba', 'matid', 'emission', 'specular', 'shininess', 'reflectance']
+    'rgba', 'matid', 'emission', 'specular', 'shininess', 'reflectance',
+    'needstage',
+]
 
 # When writing into `model.{body,geom,site}_{pos,quat}` we must ensure that the
 # corresponding rows in `model.{body,geom,site}_sameframe` are set to zero,
@@ -72,3 +74,8 @@ INDIRECT_REFERENCE_NAMESPACE_PREFIX = 'attrib:'
 INDIRECT_REFERENCE_ATTRIB = {
     'xbody': 'body',
 }
+
+# 17 decimal digits is sufficient to represent a double float without loss
+# of precision.
+# https://en.wikipedia.org/wiki/IEEE_754#Character_representation
+XML_DEFAULT_PRECISION = 17
